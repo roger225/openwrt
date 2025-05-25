@@ -202,8 +202,8 @@ define Device/tplink_archer-c7-v5
   IMAGE_SIZE := 15360k
   DEVICE_MODEL := Archer C7
   DEVICE_VARIANT := v5
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k-ct \
-	ath10k-firmware-qca988x-ct
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k \
+	ath10k-firmware-qca988x
   TPLINK_BOARD_ID := ARCHER-C7-V5
   SUPPORTED_DEVICES += archer-c7-v5
 endef
