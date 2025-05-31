@@ -16,7 +16,7 @@ echo "Log file: $logfile"
 echo "==================================="
 
 # echo "make dirclean"
-# make dirclean
+make dirclean
 
 # echo "Build tools/compile -j1 V=s ..."
 # make tools/compile -j1 V=s
@@ -27,8 +27,9 @@ echo "==================================="
 # # Clean previous build artifacts
 # echo "Executing: make dirclean..."
 # make dirclean || { echo "make dirclean failed"; exit 1; }
-
+make tools/ccache/compile -j12
 # Update and install feeds
+make tools/compile -j12
 
 echo "Updating feeds..."
 ./scripts/feeds update -a || { echo "feeds update failed"; exit 1; }
