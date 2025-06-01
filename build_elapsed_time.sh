@@ -24,12 +24,12 @@ make dirclean
 # echo "Build ccache..."
 # make tools/ccache/compile || { echo "ccache build failed"; exit 1; }
 
-# # Clean previous build artifacts
-# echo "Executing: make dirclean..."
-# make dirclean || { echo "make dirclean failed"; exit 1; }
-make tools/ccache/compile -j12
-# Update and install feeds
-make tools/compile -j12
+# # # Clean previous build artifacts
+# # echo "Executing: make dirclean..."
+# # make dirclean || { echo "make dirclean failed"; exit 1; }
+# make tools/ccache/compile -j12
+# # Update and install feeds
+# make tools/compile -j12
 
 echo "Updating feeds..."
 ./scripts/feeds update -a || { echo "feeds update failed"; exit 1; }
