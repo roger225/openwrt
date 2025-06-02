@@ -15,36 +15,63 @@ echo "Starting OpenWrt build process..."
 echo "Log file: $logfile"
 echo "==================================="
 
-# echo "make dirclean"
-make dirclean
+# Set your CPU core count for parallel builds
+NUM_CORES=$(nproc)
 
-# echo "Build tools/compile -j1 V=s ..."
-# make tools/compile -j1 V=s
+# echo "Cleaning previous build directories..."
+# rm -rf build_dir staging_dir tmp
 
-# echo "Build ccache..."
-# make tools/ccache/compile || { echo "ccache build failed"; exit 1; }
+# Clean previous build artifacts (optional)
+echo "Running: make dirclean..."
+make dirclean || { echo "make dirclean failed"; exit 1; }
 
-# # # Clean previous build artifacts
-# # echo "Executing: make dirclean..."
-# # make dirclean || { echo "make dirclean failed"; exit 1; }
-# make tools/ccache/compile -j12
-# # Update and install feeds
-# make tools/compile -j12
+# Skip ccache build if already present
+if [ -x "staging_dir/host/bin/ccache" ]; then
+  echo "ccache already built. Skipping build."
+else
+  echo "Building ccache..."
+  make tools/ccache/compile V=s || { echo "ccache build failed"; exit 1; }
+fi
 
+if [ ! -x "staging_dir/host/bin/ccache" ]; then
+  echo "Error: ccache binary still missing after build!"
+  exit 1
+fi
+
+# Show ccache version
+echo "Show ccache version..."
+staging_dir/host/bin/ccache --version
+
+# Update and install feeds
 echo "Updating feeds..."
+cp .config .config.backup
 ./scripts/feeds update -a || { echo "feeds update failed"; exit 1; }
 
 echo "Installing feeds..."
 ./scripts/feeds install -a || { echo "feeds install failed"; exit 1; }
 
-# Regenerate configuration
+# Load default configuration (if needed, after copying new .config)
 echo "Running make defconfig..."
+cp .config.backup .config
 make defconfig || { echo "make defconfig failed"; exit 1; }
 
-# Download sources and build world
-echo "Executing: make -j12 download world..."
-make -j12 download world V=s || { echo "Build failed"; exit 1; }
+# Build the rest of tools in parallel
+echo "Building all tools..."
+make -j"$NUM_CORES" tools/install V=s || { echo "tools build failed"; exit 1; }
 
+# Build the toolchain in parallel
+echo "Building toolchain..."
+make -j"$NUM_CORES" toolchain/install V=s || { echo "toolchain build failed"; exit 1; }
+
+echo "Checking tools and toolchain stamps..."
+find staging_dir/host/stamp/ -name '*.installed' -exec ls -lh {} +
+find staging_dir/toolchain-*/stamp/ -name '*.installed' -exec ls -lh {} +
+
+# Download sources and build everything (main build)
+echo "Executing: make -j$NUM_CORES download world..."
+make -j"$NUM_CORES" download world V=s || { echo "Build failed"; exit 1; }
+
+rm .config.backup
 # Record end time
 end_time=$(date +%s)
 
